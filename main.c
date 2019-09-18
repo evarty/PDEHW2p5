@@ -20,7 +20,7 @@ int main(void){
     double mu = deltat/deltax/deltax;
     int length = (int)(xfinal/deltax);
     double r[length + 1];
-    double alpha = 2;
+    double g = 2;
     double theta = 0.5;
     double a[length + 1];
     double bdiag[length + 1];
@@ -69,37 +69,34 @@ int main(void){
 
 
     //Construct all ujn for the steps in the interior
-    //Start at first time step after IC.
     //Set up all the matrix values for thomas algo.
     //Solve via thomas algo.
     for(int n = 1; n < tfinal/deltat + 1; n++){
-        for(int j = 0; j < length + 1; j++){
+        for(int j = 0; j < length; j++){
 
             //Construct RHS of the equation.
             if(j==0){
-                r[j] = -alpha*deltax*mu + mu*(1-theta)*(ujn[j+1][n-1] - ujn[j][n-1]);
+                r[j] = -g*deltax*mu*theta;
                 printf("r[0]=%lf\n",r[j]);
-            }else if(j<length){
-                r[j] = (1 - 2*mu*(1-theta))*ujn[j][n-1] + mu*(1-theta)*(ujn[j+1][n-1] + ujn[j-1][n-1]);
+            }else if(j<length - 1){
+                r[j] = ujn[j][n-1] + (1 - theta)*mu*(ujn[j-1][n-1] - 2*ujn[j][n-1] + ujn[j+1][n-1]);
                 printf("r[%d]=%lf\n",j,r[j]);
             }else{
-                r[j] = 0;
-                printf("r[20]=%lf\n",r[j]);
-            }
+                r[j] = ujn[j][n-1] + (1 - theta)*mu*(ujn[j-1][n-1] - 2*ujn[j][n-1] + ujn[j+1][n-1]) + mu*theta*ujn[j][n];
 
             //Construct a vector (subdiagonal)
             if(j==0){
-            }else if(j<length + 1){
+                
+                //All excepth the first and the last are the same.
+            }else if(j<length){
                 a[j] = -mu*theta;
             }
 
             //Construct b vector (diagonal)
             if(j==0){
-                bdiag[j] = theta;
-            }else if(j<length + 1){
+                bdiag[j] = mu*theta;
+            }else if(j<length){
                 bdiag[j] = 1+2*mu*theta;
-            }else{
-                bdiag[j] = 1;
             }
 
             //Construct c vector (superdiagonal)
@@ -136,7 +133,7 @@ void ThomasAlgo(double *r, double *unp1, double *a, double *b, double *c, int le
     cprime[0] = c[0]/b[0];
     rdoubleprime[0] = r[0]/b[0];
 
-    for(int j = 1; j < length + 1; j++){
+    for(int j = 1; j < length ; j++){
 
         bprime[j] = b[j] - a[j]*cprime[j-1]; 
         rprime[j] = r[j] - a[j]*rdoubleprime[j-1];
@@ -144,11 +141,11 @@ void ThomasAlgo(double *r, double *unp1, double *a, double *b, double *c, int le
         rdoubleprime[j] = rprime[j]/bprime[j];
     }
 
-    bprime[length + 1] = b[length + 1] - a[length + 1]*cprime[length];
-    rprime[length + 1] = r[length + 1] - a[length + 1]*rdoubleprime[length];
-    rtripleprime[length + 1] = rprime[length + 1]/bprime[length + 1];
+    bprime[length] = b[length] - a[length]*cprime[length - 1];
+    rprime[length] = r[length] - a[length]*rdoubleprime[length - 1];
+    rtripleprime[length] = rprime[length]/bprime[length];
 
-    for(int j = length; j >= 0; j--){
+    for(int j = length - 1; j >= 0; j--){
         rtripleprime[j] = rdoubleprime[j] - cprime[j]*rtripleprime[j+1];
     }
 
