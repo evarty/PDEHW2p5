@@ -13,19 +13,19 @@ int main(void){
     double deltax = 0.05;
     double deltat = 0.001;
     double xfinal = 1;
-    double tfinal = 0.2;
+    double tfinal = 0.005;
     double ICvalue[(int)(xfinal/deltax)+1];
     //double X0BC = 0;
     double X1BC = 0;
     double mu = deltat/deltax/deltax;
     int length = (int)(xfinal/deltax);
-    double b[length];
-    double alpha = 3;
+    double r[length + 1];
+    double alpha = 2;
     double theta = 0.5;
-    double a[length];
-    double bdiag[length];
-    double c[length];
-    double unp1[length];
+    double a[length + 1];
+    double bdiag[length + 1];
+    double c[length + 1];
+    double unp1[length + 1];
 
     FILE *Output;
     Output = fopen("./Output.txt","w");
@@ -33,9 +33,9 @@ int main(void){
 
     //Init zero array over the entire solution space
     //There are probably more efficient ways of handling the result, but this should work
-    double ujn[(int)(xfinal/deltax)+1][(int)(tfinal/deltat)+1];
+    double ujn[length + 1][(int)(tfinal/deltat)+1];
 
-    for(int j = 0; j < xfinal/deltax + 1; j++){
+    for(int j = 0; j < length + 1; j++){
         for(int n = 0; n < tfinal/deltat + 1; n++){
             ujn[j][n] = 0;
         }
@@ -43,15 +43,15 @@ int main(void){
     printf("print0\n");
 
     //Set up the initial conditions
-    for(int j = 0; j < xfinal/deltax + 1; j++){
+    for(int j = 0; j < length + 1; j++){
         if(j*deltax <= 0.5){
             ICvalue[j] = 2*(double)j*deltax;
         }else{
             ICvalue[j] = 2-2*(double)j*deltax;
         }
     }
-    double IC[(int)(xfinal/deltax)];
-    for(int j = 0; j < xfinal/deltax + 1; j++){
+    double IC[length + 1];
+    for(int j = 0; j < length + 1; j++){
         IC[j] = ICvalue[j];
         ujn[j][0] = IC[j];
         //printf("%lf\n",ujn[j][0]);
@@ -73,15 +73,18 @@ int main(void){
     //Set up all the matrix values for thomas algo.
     //Solve via thomas algo.
     for(int n = 1; n < tfinal/deltat + 1; n++){
-        for(int j = 0; j < xfinal/deltax + 1; j++){
+        for(int j = 0; j < length + 1; j++){
 
             //Construct RHS of the equation.
             if(j==0){
-                b[j] = -alpha*deltax*mu + mu*(1-theta)*(ujn[j+1][n-1] - ujn[j][n-1]);
+                r[j] = -alpha*deltax*mu + mu*(1-theta)*(ujn[j+1][n-1] - ujn[j][n-1]);
+                printf("r[0]=%lf\n",r[j]);
             }else if(j<length){
-                b[j] = (1 - 2*mu*(1-theta))*ujn[j][n-1] + mu*(1-theta)*(ujn[j+1][n-1] + ujn[j-1][n-1]);
+                r[j] = (1 - 2*mu*(1-theta))*ujn[j][n-1] + mu*(1-theta)*(ujn[j+1][n-1] + ujn[j-1][n-1]);
+                printf("r[%d]=%lf\n",j,r[j]);
             }else{
-                b[j] = 0;
+                r[j] = 0;
+                printf("r[20]=%lf\n",r[j]);
             }
 
             //Construct a vector (subdiagonal)
@@ -94,9 +97,9 @@ int main(void){
             if(j==0){
                 bdiag[j] = theta;
             }else if(j<length + 1){
-                b[j] = 1-2*mu*theta;
+                bdiag[j] = 1+2*mu*theta;
             }else{
-                b[j] = 1;
+                bdiag[j] = 1;
             }
 
             //Construct c vector (superdiagonal)
@@ -105,7 +108,7 @@ int main(void){
             }
         }
 
-        ThomasAlgo(b, unp1, a, bdiag, c, length);
+        ThomasAlgo(r, unp1, a, bdiag, c, length);
         for(int j = 0; j < length + 1; j++){
             ujn[j][n] = unp1[j];
             //printf("%lf\n",unp1[j]);
@@ -113,7 +116,7 @@ int main(void){
 
     }
 
-    for(int n = 0; n < (int)(tfinal/deltat); n++){
+    for(int n = 0; n < (int)(tfinal/deltat) + 1; n++){
         for(int j = 0; j < length + 1; j++){
             fprintf(Output,"%d %d %lf\n",j,n,ujn[j][n]);
         }
