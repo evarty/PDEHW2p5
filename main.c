@@ -82,7 +82,8 @@ int main(void){
                 r[j] = ujn[j][n-1] + (1 - theta)*mu*(ujn[j-1][n-1] - 2*ujn[j][n-1] + ujn[j+1][n-1]);
                 printf("r[%d]=%lf\n",j,r[j]);
             }else{
-                r[j] = ujn[j][n-1] + (1 - theta)*mu*(ujn[j-1][n-1] - 2*ujn[j][n-1] + ujn[j+1][n-1]) + mu*theta*ujn[j][n];
+                r[j] = ujn[j][n-1] + (1 - theta)*mu*(ujn[j-1][n-1] - 2*ujn[j][n-1] + ujn[j+1][n-1]) + mu*theta*ujn[j+1][n];
+                printf("r[%d]=%lf\n",j,r[j]);
             }
 
             //Construct a vector (subdiagonal)
@@ -101,7 +102,7 @@ int main(void){
             }
 
             //Construct c vector (superdiagonal)
-            if(j<length){
+            if(j<length - 1){
                 c[j] = -mu*theta;
             }
         }
