@@ -83,6 +83,7 @@ int main(void){
                 printf("r[%d]=%lf\n",j,r[j]);
             }else{
                 r[j] = ujn[j][n-1] + (1 - theta)*mu*(ujn[j-1][n-1] - 2*ujn[j][n-1] + ujn[j+1][n-1]) + mu*theta*ujn[j][n];
+            }
 
             //Construct a vector (subdiagonal)
             if(j==0){
